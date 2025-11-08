@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft Texture Pack Optimizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 30px;
+            background: #f8f9ff;
+        }
+
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: #f0f1ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #764ba2;
+            background: #e8e9ff;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .file-name {
+            margin-top: 15px;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .options {
+            display: grid;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .option-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        select, input[type="range"] {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        input[type="range"] {
+            cursor: pointer;
+        }
+
+        .quality-value {
+            text-align: center;
+            font-weight: 600;
+            color: #667eea;
+            margin-top: 5px;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .progress-container {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 10px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .stats {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9ff;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .stat-value {
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .success {
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #ffffff;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Minecraft Server Pack Optimizer</h1>
+        <p class="subtitle">Optimize ItemsAdder & ModelEngine resource packs</p>
+
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📦</div>
+            <p><strong>Click to upload</strong> or drag and drop</p>
+            <p style="color: #999; font-size: 12px; margin-top: 5px;">ZIP files only (Max 150MB) - ItemsAdder/ModelEngine compatible</p>
+            <input type="file" id="fileInput" accept=".zip">
+            <div class="file-name" id="fileName"></div>
+        </div>
+
+        <div class="options">
+            <div class="option-group">
+                <label for="deviceMode">🎯 Mode Optimasi (Sesuai Device Player)</label>
+                <select id="deviceMode" style="font-weight: 600;">
+                    <option value="potato">🥔 Potato Mode (HP/PC Lemah - Target 10-13MB)</option>
+                    <option value="balanced" selected>⚖️ Balanced Mode (PC Normal - Target 13-18MB)</option>
+                    <option value="quality">💎 Quality Mode (PC Kuat - Target 18-25MB)</option>
+                </select>
+                <p style="font-size: 12px; color: #ff6b6b; margin-top: 5px; font-weight: 600;">
+                    ⚠️ IMPORTANT: Pilih "Potato Mode" untuk fix lag & force close!
+                </p>
+            </div>
+
+            <div class="option-group">
+                <label for="resolution">Resolusi Maksimal (HD Textures → Downscale)</label>
+                <select id="resolution">
+                    <option value="128">128x128 (Ultra Aggressive)</option>
+                    <option value="256" selected>256x256 (Recommended untuk Potato)</option>
+                    <option value="384">384x384 (Balanced)</option>
+                    <option value="512">512x512 (High Quality)</option>
+                </select>
+                <p style="font-size: 12px; color: #666; margin-top: 5px;">
+                    💡 256x perfect untuk HP lemah, downscale dari 1024x → 256x save 75% size
+                </p>
+            </div>
+
+            <div class="option-group">
+                <label for="quality">Kualitas Kompresi</label>
+                <input type="range" id="quality" min="70" max="95" value="85">
+                <div class="quality-value" id="qualityValue">85%</div>
+                <p style="font-size: 12px; color: #666; margin-top: 5px;">
+                    💡 75-85% optimal untuk ModelEngine packs
+                </p>
+            </div>
+
+            <div class="option-group">
+                <label for="format">Format Output</label>
+                <select id="format">
+                    <option value="png" selected>PNG (Fabric Compatible - Recommended)</option>
+                    <option value="webp" disabled>WebP (Butuh Optifine - Not for Fabric)</option>
+                </select>
+                <p style="font-size: 12px; color: #ff9800; margin-top: 5px;">
+                    ⚠️ WebP disabled karena player pakai Fabric (no Optifine support)
+                </p>
+            </div>
+
+            <div class="option-group">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                    <input type="checkbox" id="aggressive" checked style="width: 20px; height: 20px; cursor: pointer;">
+                    <span>⚡ Aggressive Compression (Recommended ON)</span>
+                </label>
+                <p style="font-size: 12px; color: #4caf50; margin-top: 5px;">
+                    ✅ Reduce color palette 256 → 128 colors, save 30-40% extra tanpa quality loss berarti
+                </p>
+            </div>
+
+            <div style="background: #fff3cd; padding: 15px; border-radius: 10px; border-left: 4px solid #ff9800; margin-top: 10px;">
+                <p style="font-size: 13px; color: #856404; margin: 0; line-height: 1.6;">
+                    <strong>🎯 Recommended Settings untuk Fix Masalah Kamu:</strong><br>
+                    • Mode: <strong>Potato Mode</strong> (HP/PC lemah)<br>
+                    • Resolution: <strong>256x</strong> (downscale HD textures)<br>
+                    • Quality: <strong>75-85%</strong><br>
+                    • Aggressive: <strong>ON</strong><br>
+                    • Expected Result: <strong>25MB → 10-13MB</strong> ✅
+                </p>
+            </div>
+        </div>
+
+        <button id="optimizeBtn" disabled>
+            Pilih File Terlebih Dahulu
+        </button>
+
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">Processing...</div>
+        </div>
+
+        <div class="stats" id="stats"></div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileName = document.getElementById('fileName');
+        const optimizeBtn = document.getElementById('optimizeBtn');
+        const qualitySlider = document.getElementById('quality');
+        const qualityValue = document.getElementById('qualityValue');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const statsDiv = document.getElementById('stats');
+
+        let selectedFile = null;
+
+        // Quality slider update
+        qualitySlider.addEventListener('input', (e) => {
+            qualityValue.textContent = e.target.value + '%';
+        });
+
+        // Set default quality value
+        qualityValue.textContent = qualitySlider.value + '%';
+
+        // Upload area click
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && files[0].name.endsWith('.zip')) {
+                selectedFile = files[0];
+                updateUI();
+            } else {
+                alert('Please upload a ZIP file');
+            }
+        });
+
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                selectedFile = e.target.files[0];
+                updateUI();
+            }
+        });
+
+        function updateUI() {
+            if (selectedFile) {
+                fileName.textContent = `📁 ${selectedFile.name} (${formatBytes(selectedFile.size)})`;
+                optimizeBtn.disabled = false;
+                optimizeBtn.textContent = '🚀 Optimize Texture Pack';
+            }
+        }
+
+        // Optimize button click
+        optimizeBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            formData.append('resolution', document.getElementById('resolution').value);
+            formData.append('quality', document.getElementById('quality').value);
+            formData.append('format', document.getElementById('format').value);
+            formData.append('aggressive', document.getElementById('aggressive').checked);
+            formData.append('deviceMode', document.getElementById('deviceMode').value);
+
+            optimizeBtn.disabled = true;
+            optimizeBtn.innerHTML = '<span class="spinner"></span>Optimizing ModelEngine Pack...';
+            progressContainer.style.display = 'block';
+            statsDiv.style.display = 'none';
+
+            // Simulate progress
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress > 90) progress = 90;
+                progressFill.style.width = progress + '%';
+                progressText.textContent = `Processing... ${Math.floor(progress)}%`;
+            }, 200);
+
+            try {
+                const response = await fetch('/api/optimize', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                clearInterval(progressInterval);
+                progressFill.style.width = '100%';
+                progressText.textContent = 'Complete! 100%';
+
+                if (!response.ok) {
+                    throw new Error('Optimization failed');
+                }
+
+                // Get stats from header
+                const statsHeader = response.headers.get('X-Stats');
+                const stats = statsHeader ? JSON.parse(statsHeader) : null;
+
+                // Download file
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'optimized-pack.zip';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+
+                // Show stats
+                if (stats) {
+                    showStats(stats);
+                }
+
+                optimizeBtn.textContent = '✅ Optimization Complete!';
+                setTimeout(() => {
+                    optimizeBtn.disabled = false;
+                    optimizeBtn.textContent = '🚀 Optimize Texture Pack';
+                    progressContainer.style.display = 'none';
+                }, 3000);
+
+            } catch (error) {
+                clearInterval(progressInterval);
+                alert('Error: ' + error.message);
+                optimizeBtn.disabled = false;
+                optimizeBtn.textContent = '🚀 Optimize Texture Pack';
+                progressContainer.style.display = 'none';
+            }
+        });
+
+        function showStats(stats) {
+            const targetAchieved = stats.targetAchieved ? '✅' : '⚠️';
+            const targetColor = stats.targetAchieved ? '#4caf50' : '#ff9800';
+            
+            statsDiv.style.display = 'block';
+            statsDiv.innerHTML = `
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; text-align: center;">
+                    <div style="font-size: 24px; font-weight: bold;">${targetAchieved} ${stats.finalSizeMB} MB</div>
+                    <div style="font-size: 14px; opacity: 0.9;">Target 13MB: ${stats.targetAchieved ? 'ACHIEVED!' : 'Try Potato Mode'}</div>
+                </div>
+                
+                <div class="stat-item">
+                    <span class="stat-label">📦 Total Files</span>
+                    <span class="stat-value">${stats.totalFiles}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">🖼️ Image Files</span>
+                    <span class="stat-value">${stats.imageFiles}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">🎨 HD Textures Found (512x+)</span>
+                    <span class="stat-value" style="color: #ff9800;">${stats.hdTexturesFound}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">✅ Optimized Images</span>
+                    <span class="stat-value success">${stats.optimizedImages}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">🔒 Critical Files (Preserved)</span>
+                    <span class="stat-value">${stats.criticalFiles}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">🔊 Sound Files</span>
+                    <span class="stat-value">${stats.soundFiles}</span>
+                </div>
+                <div class="stat-item" style="border-top: 2px solid #667eea; padding-top: 15px; margin-top: 10px;">
+                    <span class="stat-label"><strong>Original Size</strong></span>
+                    <span class="stat-value">${formatBytes(stats.originalSize)}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label"><strong>Final ZIP Size</strong></span>
+                    <span class="stat-value" style="color: ${targetColor}; font-size: 18px;"><strong>${stats.finalSizeMB} MB</strong></span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label"><strong>💾 Space Saved</strong></span>
+                    <span class="stat-value success" style="font-size: 18px;"><strong>${formatBytes(stats.savedBytes)} (${stats.savedPercent}%)</strong></span>
+                </div>
+                
+                ${stats.categories.modelengine.files > 0 ? `
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e0e0e0;">
+                    <div style="font-weight: 600; margin-bottom: 10px; color: #667eea;">📊 Breakdown by Category:</div>
+                    <div class="stat-item">
+                        <span class="stat-label">ModelEngine Models</span>
+                        <span class="stat-value">${stats.categories.modelengine.files} files → Saved ${formatBytes(stats.categories.modelengine.saved)}</span>
+                    </div>
+                    ${stats.categories.items.files > 0 ? `
+                    <div class="stat-item">
+                        <span class="stat-label">Items/Weapons</span>
+                        <span class="stat-value">${stats.categories.items.files} files → Saved ${formatBytes(stats.categories.items.saved)}</span>
+                    </div>
+                    ` : ''}
+                    ${stats.categories.vanilla.files > 0 ? `
+                    <div class="stat-item">
+                        <span class="stat-label">Vanilla Textures</span>
+                        <span class="stat-value">${stats.categories.vanilla.files} files → Saved ${formatBytes(stats.categories.vanilla.saved)}</span>
+                    </div>
+                    ` : ''}
+                </div>
+                ` : ''}
+                
+                <div style="background: ${stats.targetAchieved ? '#d4edda' : '#fff3cd'}; padding: 12px; border-radius: 8px; margin-top: 15px; border-left: 4px solid ${stats.targetAchieved ? '#28a745' : '#ff9800'};">
+                    <p style="margin: 0; font-size: 13px; color: ${stats.targetAchieved ? '#155724' : '#856404'};">
+                        ${stats.targetAchieved 
+                            ? '<strong>✅ Perfect!</strong> Pack size optimal untuk HP/PC lemah. Player tidak akan lag atau force close lagi!' 
+                            : '<strong>⚠️ Tip:</strong> Masih bisa lebih kecil! Coba: Potato Mode + Resolution 256x + Aggressive ON untuk target 10-13MB.'}
+                    </p>
+                </div>
+            `;
+        }
+
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+    </script>
+</body>
+</html>
