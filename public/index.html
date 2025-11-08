@@ -417,12 +417,21 @@
                 });
 
                 clearInterval(progressInterval);
-                progressFill.style.width = '100%';
-                progressText.textContent = 'Complete! 100%';
 
                 if (!response.ok) {
-                    throw new Error('Optimization failed');
+                    // Handle error response
+                    let errorData;
+                    try {
+                        errorData = await response.json();
+                    } catch (e) {
+                        errorData = { error: 'Server error', suggestion: 'Try again with different settings' };
+                    }
+                    
+                    throw new Error(errorData.error || 'Optimization failed');
                 }
+
+                progressFill.style.width = '100%';
+                progressText.textContent = 'Complete! 100%';
 
                 // Get stats from header
                 const statsHeader = response.headers.get('X-Stats');
@@ -453,7 +462,22 @@
 
             } catch (error) {
                 clearInterval(progressInterval);
-                alert('Error: ' + error.message);
+                console.error('Optimization error:', error);
+                
+                // Show user-friendly error with suggestions
+                let errorMsg = error.message || 'Optimization failed';
+                
+                const suggestions = [
+                    '💡 Try these solutions:',
+                    '1️⃣ Use Potato Mode',
+                    '2️⃣ Set resolution to 256x or 128x',
+                    '3️⃣ Reduce quality to 75%',
+                    '4️⃣ Check if ZIP file is valid (try re-zip)',
+                    '5️⃣ Remove corrupted textures if any'
+                ].join('\n');
+                
+                alert(`❌ Error: ${errorMsg}\n\n${suggestions}`);
+                
                 optimizeBtn.disabled = false;
                 optimizeBtn.textContent = '🚀 Optimize Texture Pack';
                 progressContainer.style.display = 'none';
