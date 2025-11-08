@@ -3,13 +3,14 @@
   "version": "1.0.0",
   "description": "Minecraft Texture Pack Optimizer - Vercel Ready",
   "main": "api/index.js",
+  "type": "module",
   "scripts": {
     "dev": "vercel dev",
     "build": "echo 'No build needed'",
     "start": "vercel dev"
   },
   "dependencies": {
-    "sharp": "^0.33.0",
+    "sharp": "^0.33.5",
     "jszip": "^3.10.1",
     "formidable": "^3.5.1",
     "mime-types": "^2.1.35"
